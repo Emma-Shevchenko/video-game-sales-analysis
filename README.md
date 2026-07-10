@@ -50,19 +50,13 @@ FROM (
 WHERE rank = 1
 ORDER BY Total_Sales DESC;
 ```
-Genre	Platform	Total_Sales	Game_Count
-0	Action	PS3	307.88	380
-1	Sports	Wii	292.06	261
-2	Shooter	X360	278.55	203
-3	Misc	Wii	221.06	280
-4	Racing	PS2	156.28	216
-5	Simulation	DS	132.03	285
-6	Role-Playing	DS	126.85	200
-7	Platform	NES	95.78	28
-8	Fighting	PS2	92.60	150
-9	Puzzle	DS	84.29	238
-10	Adventure	DS	47.29	240
-11	Strategy	PC	45.88	188
+| Genre | Platform | Total Sales (M) | Games |
+|---|---|---|---|
+| Action | PS3 | 307.88 | 380 |
+| Sports | Wii | 292.06 | 261 |
+| Shooter | X360 | 278.55 | 203 |
+| Role-Playing | DS | 126.85 | 200 |
+| Strategy | PC | 45.88 | 188 |
 
 ### Regional market share
 ```sql
@@ -98,48 +92,46 @@ Top result: **Monster Hunter Freedom 3** (PSP, 2010) — 4.87M in Japan vs. esse
 
 Full list of 20 queries (including window functions, platform family grouping, and year-over-year analysis) is available in [`sql/queries.sql`](sql/queries.sql).
 
----
 
 ## Exploratory Data Analysis
 
 ### Sales are heavily right-skewed
 Most games sell under 1M copies, while a handful of blockbusters sell 20–80M+. A log1p transform makes the shape of the distribution readable.
 
-![Distribution of Global Sales](images/Distribution of Global Sales.png)
+![Distribution of Global Sales](images/Distribution_of_Global_Sales.png)
 
 ### Genre landscape
 Action dominates both in volume (3,316 titles, 20% of the catalog) and total revenue (1,751M), followed by Sports and Shooter.
 
-![Number of Games Released per Genre](images/Number of Games Released per Genre.png)
-![Total Sales by Genre](images/Total Sales by Genre.png)
-![Distribution of Games by Genre](images/Distribution of Games by Genre.png)
+![Number of Games Released per Genre](images/Number_of_Games_Released_per_Genre.png)
+![Total Sales by Genre](images/Total_Sales_by_Genre.png)
+![Distribution of Games by Genre](images/Distribution_of_Games_by_Genre.png)
 
 ### Platforms
 PS2 is the best-selling platform of all time (1,255.6M), ahead of Xbox 360 and PS3.
 
-![Top 10 Platforms by Global Sales](images/Top 10 Platforms by Global Sales.png)
+![Top 10 Platforms by Global Sales](images/Top_10_Platforms_by_Global_Sales.png)
 
 ### Regional split
 North America accounts for roughly half of global sales, Europe just over a quarter, and Japan about 14.5%.
 
-![Regional Share of Global Video Game Sales](images/Regional Share of Global Video Game Sales.png)
+![Regional Share of Global Video Game Sales](images/Regional_Share_of_Global_Video_Game_Sales.png)
 
 ### Correlation between regional markets
 NA and Global sales are almost perfectly correlated (0.94) — unsurprising given NA's market weight. Japan is the least correlated with the other regions (0.29–0.45), reflecting its distinct genre preferences (JRPGs over shooters, for instance).
 
-![Correlation Between Sales Regions](images/Correlation Between Sales Regions.png)
+![Correlation Between Sales Regions](images/Correlation_Between_Sales_Regions.png)
 
 ### Sales trend over time (missing-year rows excluded)
 Global sales rose steadily from 1980, peaked around 2008–2009 (~680M/year), and declined sharply afterward — a decline that also reflects incomplete/older data for post-2015 releases in this dataset rather than a real market collapse.
 
-![Global Video Game Sales Trend Over Years](images/Global Video Game Sales Trend Over Years.png)
+![Global Video Game Sales Trend Over Years](images/Global_Video_Game_Sales_Trend_Over_Years.png)
 
 ### Genre trends over time
 Action overtook Sports and Shooter as the dominant genre from the mid-2000s onward.
 
-![Sales Trends for Top Genres Over Years](images/Sales Trends for Top Genres Over Years.png)
+![Sales Trends for Top Genres Over Years](images/Sales_Trends_for_Top_Genres_Over_Years.png)
 
----
 
 ## Feature Engineering
 The task was framed as **binary classification**: a game is labeled `Hit = 1` if its `Global_Sales` exceeds the dataset median, `0` otherwise. This avoids the difficulty (and leakage risk) of predicting an exact sales figure and instead answers a cleaner business question: *"is this combination of platform, genre, publisher and year associated with above-median success?"*
@@ -151,7 +143,6 @@ Key steps:
 - Stratified 80/20 train-test split to preserve class balance.
 - Features were standardized (`StandardScaler`) for Logistic Regression; tree-based models used the raw (unscaled) feature matrix.
 
----
 
 ## Machine Learning Models
 
@@ -172,9 +163,8 @@ Three classifiers were trained and compared: **Logistic Regression**, **Random F
 ### Feature importance (Random Forest)
 `Year` dominates feature importance by a wide margin, followed by publisher grouping (`Publisher_grouped_Other`, `Electronic Arts`, `Nintendo`) and a handful of genres (Adventure, Misc, Sports, Shooter). This makes intuitive sense: release timing correlates with market size and platform generation, and certain publishers/genres are structurally more likely to over-perform.
 
-![Top 15 Feature Importance](images/Top_15_Feature_Importance_-_Hit_Game_Prediction__Random_Forest_.png)
+![Top 15 Feature Importance](images/Top_15_Feature_Importance.png)
 
----
 
 ## Key Findings
 
@@ -185,7 +175,6 @@ Three classifiers were trained and compared: **Logistic Regression**, **Random F
 - **XGBoost outperformed both Logistic Regression and Random Forest** for hit prediction, suggesting the relationship between platform/genre/publisher/year and commercial success is non-linear enough to reward gradient boosting.
 - **Release year is the single strongest predictor of "hit" status**, more so than genre or publisher — largely a proxy for market size and platform generation at the time of release, rather than a causal driver.
 
----
 
 ## Tech Stack
 
@@ -194,7 +183,6 @@ Three classifiers were trained and compared: **Logistic Regression**, **Random F
 - **Visualization:** matplotlib, seaborn, plotly
 - **Machine Learning:** scikit-learn (Logistic Regression, Random Forest), XGBoost
 
----
 
 ## Project Structure
 
@@ -211,7 +199,6 @@ video-game-sales-analysis/
 └── vgsales.db
 ```
 
----
 
 ## How to Run
 
@@ -222,7 +209,6 @@ pip install -r requirements.txt
 jupyter notebook notebooks/01_data_cleaning.ipynb
 ```
 
----
 
 ## Notes on Methodology
 
@@ -231,7 +217,6 @@ This project deliberately avoids two common pitfalls seen in "quick" EDA/ML note
 1. **Naive imputation of `Year`** — filling all missing years with the median and then using that same column for time-series aggregation would silently distort every yearly trend. This project tracks missing-year rows explicitly and excludes them from time-based analysis.
 2. **Data leakage in the ML target** — since `Global_Sales` is the literal sum of the regional sales columns, those columns are excluded from the feature set entirely, so the model has to learn from platform/genre/publisher/year metadata alone rather than "cheating" off the target.
 
----
 
 This project is available under the MIT License. The dataset is used for educational/portfolio purposes.
 
