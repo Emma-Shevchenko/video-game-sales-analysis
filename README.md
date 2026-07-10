@@ -1,11 +1,13 @@
 # video-game-sales-analysis
-Comprehensive EDA, Advanced SQL Analysis and Machine Learning (Hit Game Prediction) on Video Game Sales dataset
+**Comprehensive EDA, Advanced SQL Analysis and Machine Learning (Hit Game Prediction) on Video Game Sales dataset**
 
-# Video Game Sales Analysis: SQL Analytics + Machine Learning
-A end-to-end data analysis project on the historical video game sales dataset (16,598 titles, 1980–2020). The project combines **20+ SQL queries** (including window functions) for business analytics with a **machine learning pipeline** that predicts whether a game will become a commercial "hit."
-The goal was to treat this as a real analytics project rather than a single-notebook script: clean data properly, ask meaningful business questions in SQL, visualize the market, and build a leakage-free classification model on top of it.
+An end-to-end data analysis project on the historical video game sales dataset (16,598 titles, 1980–2020). The project combines **20 SQL queries** (including window functions) for business analytics with a **machine learning pipeline** that predicts whether a game will become a commercial "hit."
 
-## Objectives:
+
+## Objectives
+
+The main goals of this project were to:
+
 - Clean and preprocess a real-world dataset
 - Perform analytical SQL queries
 - Explore sales patterns using visualizations
@@ -20,7 +22,7 @@ The goal was to treat this as a real analytics project rather than a single-note
 - **Time span:** 1980–2020
 - **Columns:** `Rank`, `Name`, `Platform`, `Year`, `Genre`, `Publisher`, `NA_Sales`, `EU_Sales`, `JP_Sales`, `Other_Sales`, `Global_Sales`
 - **Missing data:** `Year` (271 rows, 1.63%), `Publisher` (58 rows)
-- No duplicate rows were found.
+- No duplicate rows
 
 
 ## Data Cleaning
@@ -34,52 +36,7 @@ The goal was to treat this as a real analytics project rather than a single-note
 
 ## SQL Analysis
 
-All queries were run against a SQLite database (`vgsales.db`) built directly from the cleaned dataframe. Below are a few representative examples (the full list of 20 queries covers sales by genre/publisher/platform, regional market share, best platform per genre, top games per platform, publisher longevity, and more).
-
-### Best-selling platform per genre (window function)
-```sql
-SELECT Genre, Platform, Total_Sales, Game_Count
-FROM (
-    SELECT Genre, Platform,
-           ROUND(SUM(Global_Sales), 2) AS Total_Sales,
-           COUNT(*) AS Game_Count,
-           RANK() OVER (PARTITION BY Genre ORDER BY SUM(Global_Sales) DESC) AS rank
-    FROM games
-    GROUP BY Genre, Platform
-)
-WHERE rank = 1
-ORDER BY Total_Sales DESC;
-```
-| Genre | Platform | Total Sales (M) | Games |
-|---|---|---|---|
-| Action | PS3 | 307.88 | 380 |
-| Sports | Wii | 292.06 | 261 |
-| Shooter | X360 | 278.55 | 203 |
-| Role-Playing | DS | 126.85 | 200 |
-| Strategy | PC | 45.88 | 188 |
-
-### Regional market share
-```sql
-SELECT
-    ROUND(100.0 * SUM(NA_Sales)    / SUM(Global_Sales), 2) AS NA_Share,
-    ROUND(100.0 * SUM(EU_Sales)    / SUM(Global_Sales), 2) AS EU_Share,
-    ROUND(100.0 * SUM(JP_Sales)    / SUM(Global_Sales), 2) AS JP_Share,
-    ROUND(100.0 * SUM(Other_Sales) / SUM(Global_Sales), 2) AS Other_Share
-FROM games;
-```
-**Result:** North America 49.25% · Europe 27.29% · Japan 14.47% · Other 8.94%
-
-### Games More Popular in Japan than in West
-```sql
-SELECT Name, Platform, Year, JP_Sales,
-       ROUND((NA_Sales + EU_Sales)/2, 2) AS West_Avg,
-       ROUND(JP_Sales - (NA_Sales + EU_Sales)/2, 2) AS JP_vs_West_Diff
-FROM games
-WHERE JP_Sales > (NA_Sales + EU_Sales) * 1.5
-ORDER BY JP_vs_West_Diff DESC
-LIMIT 10;
-```
-Top result: **Monster Hunter Freedom 3** (PSP, 2010) — 4.87M in Japan vs. essentially 0 in the West.
+All queries were executed on a SQLite database with two tables: `games` (full) and `games_time` (clean for temporal analysis).
 
 ### Key Business Insights from SQL:
 
@@ -206,18 +163,9 @@ video-game-sales-analysis/
 git clone https://github.com/Emma-Shevchenko/video-game-sales-analysis.git
 cd video-game-sales-analysis
 pip install -r requirements.txt
-jupyter notebook notebooks/01_data_cleaning.ipynb
+jupyter notebook notebooks/vg_sales_analysis.ipynb
 ```
 
 
-## Notes on Methodology
-
-This project deliberately avoids two common pitfalls seen in "quick" EDA/ML notebooks:
-
-1. **Naive imputation of `Year`** — filling all missing years with the median and then using that same column for time-series aggregation would silently distort every yearly trend. This project tracks missing-year rows explicitly and excludes them from time-based analysis.
-2. **Data leakage in the ML target** — since `Global_Sales` is the literal sum of the regional sales columns, those columns are excluded from the feature set entirely, so the model has to learn from platform/genre/publisher/year metadata alone rather than "cheating" off the target.
-
-
-This project is available under the MIT License. The dataset is used for educational/portfolio purposes.
-
-
+## Made by Emiliia Shevchenko
+Created as a portfolio project demonstrating practical skills in SQL, Data Analysis, Visualization, and Machine Learning.
